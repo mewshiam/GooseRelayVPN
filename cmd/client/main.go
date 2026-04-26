@@ -28,9 +28,8 @@ func main() {
 		ScriptURL: cfg.ScriptURL,
 		AESKeyHex: cfg.AESKeyHex,
 		Fronting: carrier.FrontingConfig{
-			GoogleIP:   cfg.GoogleIP,
-			SNIHost:    cfg.SNIHost,
-			HostHeader: "script.google.com",
+			GoogleIP: cfg.GoogleIP,
+			SNIHost:  cfg.SNIHost,
 		},
 	})
 	if err != nil {

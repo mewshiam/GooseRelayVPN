@@ -13,35 +13,17 @@ import (
 )
 
 // FrontingConfig describes how to reach script.google.com without revealing
-// the real Host to a passive on-path observer.
-//
-// Direct port of FlowDriver/internal/httpclient/client.go: dial GoogleIP, do a
-// TLS handshake with SNI=SNIHost, then send HTTP requests with Host=HostHeader.
+// the real Host to a passive on-path observer: dial GoogleIP, do a TLS
+// handshake with SNI=SNIHost. Go's default behavior of Host = URL.Host then
+// routes the request to the right Google backend (and follows the Apps Script
+// 302 redirect to script.googleusercontent.com correctly).
 type FrontingConfig struct {
-	GoogleIP   string // "ip:443"
-	SNIHost    string // e.g. "www.google.com"
-	HostHeader string // e.g. "script.google.com"
+	GoogleIP string // "ip:443"
+	SNIHost  string // e.g. "www.google.com"
 }
 
-// hostRewriteTransport overrides req.Host on every RoundTrip so the inner HTTP
-// request reaches the right Apps Script deployment regardless of what the
-// outer URL says.
-type hostRewriteTransport struct {
-	rt   http.RoundTripper
-	host string
-}
-
-func (t *hostRewriteTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if t.host != "" {
-		req.Host = t.host
-	}
-	return t.rt.RoundTrip(req)
-}
-
-// NewFrontedClient returns an *http.Client that:
-//   - Dials cfg.GoogleIP regardless of the URL host.
-//   - Presents SNI=cfg.SNIHost in the TLS handshake.
-//   - Rewrites the HTTP Host header to cfg.HostHeader.
+// NewFrontedClient returns an *http.Client that dials cfg.GoogleIP regardless
+// of the URL host and presents SNI=cfg.SNIHost in the TLS handshake.
 //
 // pollTimeout is the per-request ceiling; it should comfortably exceed the
 // server's long-poll window (we use ~25s, default here is 60s).
@@ -65,10 +47,5 @@ func NewFrontedClient(cfg FrontingConfig, pollTimeout time.Duration) *http.Clien
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
-	var rt http.RoundTripper = transport
-	if cfg.HostHeader != "" {
-		rt = &hostRewriteTransport{rt: transport, host: cfg.HostHeader}
-	}
-
-	return &http.Client{Transport: rt, Timeout: pollTimeout}
+	return &http.Client{Transport: transport, Timeout: pollTimeout}
 }
