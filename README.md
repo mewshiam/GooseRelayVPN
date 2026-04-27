@@ -63,15 +63,22 @@ On your VPS (Ubuntu/Debian/CentOS with systemd), run:
 curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash
 ```
 
-What this command does:
+The installer is now interactive and shows a menu:
 
-- Detects your VPS CPU architecture.
-- Downloads the latest `goose-server` release binary.
-- Installs `goose-server` to `/usr/local/bin/goose-server`.
-- Creates `/etc/goose-relay/server_config.json` (with a generated `tunnel_key` if missing).
-- Installs and starts `goose-relay.service`.
+1. **Install**
+2. **Update**
+3. **Edit config**
+4. **Show current config**
+5. **Uninstall**
+6. **Exit**
 
-After it finishes, copy `tunnel_key` from `/etc/goose-relay/server_config.json` and use the same value in your client config.
+During install/edit flows, it asks whether you want to:
+- auto-generate values (recommended), or
+- manually enter `server_host`, `server_port`, and `tunnel_key`.
+
+At the end of config changes, it prints a clean, formatted JSON preview of `/etc/goose-relay/server_config.json` so you can verify everything quickly.
+
+For non-interactive environments (stdin not a TTY), it automatically runs the **Install** flow.
 
 ### Step 2: Get the binaries
 
