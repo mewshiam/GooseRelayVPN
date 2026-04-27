@@ -71,7 +71,7 @@ func (w *clientLogWriter) Write(p []byte) (int, error) {
 
 func setupClientLogging() {
 	log.SetFlags(0)
-	useColor := os.Getenv("NO_COLOR") == ""
+	useColor := shouldUseColor(os.Stdout)
 	log.SetOutput(&clientLogWriter{out: os.Stdout, useColor: useColor})
 }
 
