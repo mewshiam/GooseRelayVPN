@@ -80,6 +80,28 @@ At the end of config changes, it prints a clean, formatted JSON preview of `/etc
 
 For non-interactive environments (stdin not a TTY), it automatically runs the **Install** flow.
 
+You can also force a numeric selection in a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- <action> [config_choice] [config_mode] [uninstall_confirm]
+```
+
+- `action`: `1=Install`, `2=Update`, `3=Edit config`, `4=Show config`, `5=Uninstall`, `6=Exit`
+- `config_choice` (Install when config already exists): `1=Edit now`, `2=Keep current`
+- `config_mode` (Install/Edit config): `1=Auto-generate`, `2=Manual`  
+  (for manual mode in non-interactive use optional env vars: `SERVER_HOST`, `SERVER_PORT`, `TUNNEL_KEY`)
+- `uninstall_confirm`: `1=Yes`, `2=No`
+
+Examples:
+
+```bash
+# Update
+curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 2
+
+# Install and force auto-generated config
+curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 1 1 1
+```
+
 ### Step 2: Get the binaries
 
 **Option A — Download a pre-built release (recommended):**

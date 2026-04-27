@@ -76,33 +76,47 @@ CFG
 }
 
 prompt_config_values() {
-  local mode
+  local mode="${1:-}"
   local server_host="0.0.0.0"
   local server_port="8443"
   local tunnel_key=""
 
   while true; do
-    echo
-    echo "How would you like to configure server_config.json?"
-    echo "  1) Auto-generate values (recommended)"
-    echo "  2) Enter values manually"
-    read -r -p "Select [1-2]: " mode
+    if [ -z "$mode" ]; then
+      echo
+      echo "How would you like to configure server_config.json?"
+      echo "  1) Auto-generate values (recommended)"
+      echo "  2) Enter values manually"
+      read -r -p "Select [1-2]: " mode
+    fi
     case "$mode" in
       1)
         tunnel_key="$(openssl rand -hex 32)"
         ;;
       2)
-        read -r -p "server_host [0.0.0.0]: " server_host
-        server_host="${server_host:-0.0.0.0}"
+        if [ -t 0 ]; then
+          read -r -p "server_host [0.0.0.0]: " server_host
+          server_host="${server_host:-0.0.0.0}"
+        else
+          server_host="${SERVER_HOST:-0.0.0.0}"
+        fi
 
-        read -r -p "server_port [8443]: " server_port
-        server_port="${server_port:-8443}"
+        if [ -t 0 ]; then
+          read -r -p "server_port [8443]: " server_port
+          server_port="${server_port:-8443}"
+        else
+          server_port="${SERVER_PORT:-8443}"
+        fi
         if ! [[ "$server_port" =~ ^[0-9]+$ ]] || [ "$server_port" -lt 1 ] || [ "$server_port" -gt 65535 ]; then
           echo "Invalid port. Please enter a number between 1 and 65535." >&2
           continue
         fi
 
-        read -r -p "tunnel_key (64 hex chars, leave empty to auto-generate): " tunnel_key
+        if [ -t 0 ]; then
+          read -r -p "tunnel_key (64 hex chars, leave empty to auto-generate): " tunnel_key
+        else
+          tunnel_key="${TUNNEL_KEY:-}"
+        fi
         if [ -z "$tunnel_key" ]; then
           tunnel_key="$(openssl rand -hex 32)"
         fi
@@ -113,6 +127,7 @@ prompt_config_values() {
         ;;
       *)
         echo "Invalid selection. Please choose 1 or 2." >&2
+        mode=""
         continue
         ;;
     esac
@@ -230,7 +245,7 @@ action_update() {
 }
 
 action_edit_config() {
-  prompt_config_values
+  prompt_config_values "${1:-}"
 
   if systemctl list-unit-files | grep -q '^goose-relay\.service'; then
     log "Restarting goose-relay to apply config changes"
@@ -242,13 +257,19 @@ action_edit_config() {
 }
 
 action_uninstall() {
-  local confirm
-  read -r -p "This will remove goose-relay binary, service, and config. Continue? [y/N]: " confirm
+  local confirm="${1:-}"
+  if [ -z "$confirm" ]; then
+    read -r -p "This will remove goose-relay binary, service, and config. Continue? [y/N]: " confirm
+  fi
   case "$confirm" in
-    y|Y|yes|YES) ;;
-    *)
+    y|Y|yes|YES|1) ;;
+    n|N|no|NO|""|2)
       log "Uninstall cancelled."
       return
+      ;;
+    *)
+      echo "Invalid uninstall confirmation. Use 1/2 or y/n." >&2
+      return 1
       ;;
   esac
 
@@ -288,6 +309,45 @@ run_menu() {
   done
 }
 
+run_non_interactive() {
+  local action="${1:-1}"
+  local config_choice="${2:-}"
+  local config_mode="${3:-}"
+  local uninstall_confirm="${4:-}"
+
+  case "$action" in
+    1)
+      fetch_and_install_binary
+      if [ -f "$CONFIG_PATH" ]; then
+        log "Existing config found at ${CONFIG_PATH}."
+        case "$config_choice" in
+          1) prompt_config_values "$config_mode" ;;
+          2|"") pretty_print_config ;;
+          *)
+            echo "Invalid existing-config choice '${config_choice}'. Use 1 (edit) or 2 (keep)." >&2
+            exit 1
+            ;;
+        esac
+      else
+        prompt_config_values "$config_mode"
+      fi
+      install_or_update_service
+      log "Done. Current service status:"
+      systemctl --no-pager --full status goose-relay || true
+      log "Remember: copy tunnel_key from ${CONFIG_PATH} into your client_config.json"
+      ;;
+    2) action_update ;;
+    3) action_edit_config "$config_mode" ;;
+    4) pretty_print_config ;;
+    5) action_uninstall "$uninstall_confirm" ;;
+    6) log "Bye." ;;
+    *)
+      echo "Invalid action '${action}'. Use 1-6." >&2
+      exit 1
+      ;;
+  esac
+}
+
 main() {
   require_cmd curl
   require_cmd tar
@@ -297,7 +357,10 @@ main() {
   require_cmd systemctl
   ensure_root
 
-  if [ -t 0 ]; then
+  if [ "$#" -gt 0 ]; then
+    log "Non-interactive selection mode detected via arguments."
+    run_non_interactive "$@"
+  elif [ -t 0 ]; then
     run_menu
   else
     log "Non-interactive mode detected. Running Install flow by default."
