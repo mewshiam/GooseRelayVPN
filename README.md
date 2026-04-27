@@ -55,6 +55,31 @@ Your application sends TCP bytes through the SOCKS5 listener on your computer. T
 
 You need a Linux VPS with a public IP. Any provider works.
 
+### Quick VPS server install (one command)
+
+On your VPS (Ubuntu/Debian/CentOS with systemd), run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash
+```
+
+For update later:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- update
+```
+
+What this command does:
+
+- Detects your VPS CPU architecture.
+- Downloads the latest `goose-server` release binary.
+- Installs `goose-server` to `/usr/local/bin/goose-server`.
+- Creates `/etc/goose-relay/server_config.json` (with a generated `tunnel_key` if missing).
+- Installs and starts `goose-relay.service`.
+- Prompts you to keep existing auth key, enter a custom one, or generate a new one.
+
+After it finishes, it prints the final server config. Copy `tunnel_key` from `/etc/goose-relay/server_config.json` and use the same value in your client config.
+
 ### Step 2: Get the binaries
 
 **Option A — Download a pre-built release (recommended):**
