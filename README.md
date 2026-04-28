@@ -60,7 +60,7 @@ You need a Linux VPS with a public IP. Any provider works.
 On your VPS (Ubuntu/Debian/CentOS with systemd), run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/mewshiam/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash
 ```
 
 The installer is now interactive and shows a menu:
@@ -83,7 +83,7 @@ For non-interactive environments (stdin not a TTY), it automatically runs the **
 You can also force a numeric selection in a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- <action> [config_choice] [config_mode] [uninstall_confirm]
+curl -fsSL https://raw.githubusercontent.com/mewshiam/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- <action> [config_choice] [config_mode] [uninstall_confirm]
 ```
 
 - `action`: `1=Install`, `2=Update`, `3=Edit config`, `4=Show config`, `5=Uninstall`, `6=Exit`
@@ -96,10 +96,10 @@ Examples:
 
 ```bash
 # Update
-curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 2
+curl -fsSL https://raw.githubusercontent.com/mewshiam/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 2
 
 # Install and force auto-generated config
-curl -fsSL https://raw.githubusercontent.com/kianmhz/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 1 1 1
+curl -fsSL https://raw.githubusercontent.com/mewshiam/GooseRelayVPN/main/scripts/install-vps.sh | sudo bash -s -- 1 1 1
 ```
 
 ### Step 2: Get the binaries
